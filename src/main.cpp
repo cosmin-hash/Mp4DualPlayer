@@ -2,6 +2,7 @@
 #include <QMainWindow>
 #include <QDebug>
 #include <iostream>
+#include <cstdlib>
 #include "mainwindow.h"
 
 #ifdef _WIN32
@@ -86,7 +87,41 @@ int main(int argc, char *argv[])
     QApplication::processEvents();
 
     std::cout << "Application exiting with code:" << result << std::endl;
-    qDebug() << "Application exiting with code:" << result;
+    std::cout.flush();
 
-    return result;
+    // ---------------------------------------------------------------------------
+    // Why this process exits via std::_Exit instead of `return result;`
+    // ---------------------------------------------------------------------------
+    // Symptom: once a video has actually played, the process used to hang/linger
+    // on exit (the console window stayed open). A "never played" exit was clean.
+    //
+    // Root cause (bisected with isolated harnesses): after a frame has been mapped
+    // via QVideoFrame::toImage() - which the rendering worker does on every frame -
+    // the Qt Multimedia FFmpeg backend's teardown blocks. The stall happens when
+    // the QMediaPlayer is dismantled, and it is NOT fixable by reordering the
+    // teardown: stopping playback, detaching the QVideoSink, joining our worker
+    // thread, clearing the source via setSource(QUrl()), and plain ~QMediaPlayer
+    // were all tried independently and every variant still blocked. The hang is
+    // inside the backend's own frame-mapping/RHI teardown, below our code.
+    //
+    // Decision: skip the unreliable backend teardown entirely. By this point the
+    // event loop has returned and there is nothing left to do but release memory
+    // and OS handles, which the kernel does on process exit anyway. std::_Exit
+    // terminates immediately without running C++ destructors or atexit handlers.
+    //
+    // Why this is safe here (the usual objections to _Exit):
+    //   * No persistent state: the app writes no files, DB, or settings, so there
+    //     are no buffers that must be flushed by a destructor. stdout is flushed
+    //     explicitly above.
+    //   * No data loss / no abrupt media cut: playback and the worker threads are
+    //     already stopped gracefully in MainWindow::closeEvent before we get here,
+    //     so audio/video has ceased; we are only skipping resource *deallocation*.
+    //   * Leaks are bounded to process lifetime: every resource (heap, threads,
+    //     GPU/handles) is reclaimed by the OS the instant the process ends.
+    // If the app ever gains persistent state, replace this with an explicit flush
+    // of that state here, then exit - do not move state-saving into destructors,
+    // which the backend hang would prevent from completing.
+    //
+    // See the matching note in VideoWidgetQt::~VideoWidgetQt (videowidget_qt.cpp).
+    std::_Exit(result);
 }

@@ -257,41 +257,7 @@ VideoWidgetQt::VideoWidgetQt(QWidget *parent)
 
 VideoWidgetQt::~VideoWidgetQt()
 {
-    // Need to stop resources gracefully first
-
-    // Stop media player first with timeout protection
-    if (m_mediaPlayer)
-    {
-        qDebug() << "Stopping media player...";
-        qDebug() << "Media player state:" << m_mediaPlayer->playbackState();
-        qDebug() << "Media player status:" << m_mediaPlayer->mediaStatus();
-
-        // Disconnect signals first to prevent any callbacks during destruction
-        m_mediaPlayer->disconnect();
-
-        // Only call stop() if the media player is actually playing
-        if (m_mediaPlayer->playbackState() == QMediaPlayer::PlayingState)
-        {
-            qDebug() << "Media player is playing, calling stop()...";
-            m_mediaPlayer->stop();
-        }
-        else
-        {
-            qDebug() << "Media player is already stopped, skipping stop() call";
-        }
-
-        // Clear source immediately - but skip if it might hang
-        qDebug() << "About to clear media player source...";
-        // Skip setSource() during destruction as it can hang
-        // The media player will be destroyed anyway by the smart pointer
-        qDebug() << "Skipping setSource() to avoid hang during destruction";
-
-        qDebug() << "Media player cleanup completed";
-    }
-
-    // Stop the processing thread cooperatively, then destroy it. Resetting the
-    // unique_ptr runs ~VideoProcessingThread, which performs stop() + wait() to
-    // join the worker - no terminate(), no fixed timeout, no busy-wait.
+    // Stop and join our own worker first (cooperative shutdown, never terminate()).
     if (m_processingThread)
     {
         qDebug() << "Stopping processing thread...";
@@ -300,7 +266,30 @@ VideoWidgetQt::~VideoWidgetQt()
         qDebug() << "Processing thread cleanup completed";
     }
 
-    // Smart pointers will automatically clean up in reverse order of declaration
+    // Halt playback and detach the sink, but deliberately do NOT clear the source
+    // (setSource(QUrl())) or otherwise force the QMediaPlayer's destruction here.
+    //
+    // Reason: with the Qt Multimedia FFmpeg backend, once a frame has been mapped
+    // via QVideoFrame::toImage() (the worker does this for every rendered frame),
+    // dismantling the player blocks in the backend's frame-mapping/RHI teardown.
+    // We tried every ordering - clear-source-first, detach-first, join-worker-
+    // first, plain ~QMediaPlayer - and all of them hang; the stall is below our
+    // code. So we stop playback (cheap and reliable) and leave the player object
+    // alone. On application exit, main() calls std::_Exit so the OS reclaims the
+    // backend without running this blocking teardown (see the detailed note in
+    // main.cpp). This best-effort path only runs on in-app widget teardown, which
+    // the current UI never triggers (both displays are fixed to software output).
+    if (m_videoSink)
+    {
+        m_videoSink->disconnect();
+    }
+    if (m_mediaPlayer)
+    {
+        m_mediaPlayer->disconnect();
+        m_mediaPlayer->stop();
+        m_mediaPlayer->setVideoOutput(nullptr);
+    }
+
     qDebug() << "VideoWidgetQt destructor completed";
 }
 
