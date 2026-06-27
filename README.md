@@ -8,13 +8,17 @@
 ![Platforms](https://img.shields.io/badge/platform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey)
 ![License](https://img.shields.io/badge/license-MIT-green)
 
+![Demo](docs/demo.gif)
+
+*Two MP4 files playing side by side, each with independent open / play / pause / stop controls.*
+
 A modern Qt Widgets-based dual display MP4 media player with advanced C++20 features.
 
 ## Features
 
 - ✅ **Dual Display Support** - Two independent video players side by side
 - ✅ **Native Qt Widgets UI** - Responsive Qt Widgets interface
-- ✅ **Advanced C++20** - Concepts, coroutines, and modern C++ features
+- ✅ **Advanced C++20** - Concepts, template metaprogramming, and perfect forwarding
 - ✅ **Cross-Platform** - Windows, Linux, and macOS support
 - ✅ **Performance Optimized** - Frame rate limiting and quality settings
 - ✅ **Clean Architecture** - Separation of media logic and widget UI
@@ -31,6 +35,53 @@ A modern Qt Widgets-based dual display MP4 media player with advanced C++20 feat
 - **MainWindow** - Main application window (`QMainWindow`) hosting the dual players
 - **Responsive Design** - Adaptive layouts and styling
 - **Real-time Updates** - Live FPS, resolution, and position tracking
+
+### Data Flow
+
+Each player moves a decoded frame from Qt Multimedia, through a single-slot
+drop queue, onto a worker thread for scaling, and back to the GUI thread for
+painting:
+
+```
+ QMediaPlayer  ──▶  QVideoSink  ──▶  frame-drop queue  ──▶  VideoProcessingThread  ──▶   GUI thread
+ (decode via        (per-frame      (one pending frame;     (scale + transform off       (QLabel shows
+  Qt Multimedia)     callback)       newest frame wins)      the GUI thread)               the QPixmap)
+       │                  │                  │                       │                          ▲
+       └ demux/decode     └ emits            └ guarded by            └ QVideoFrame → QImage      └ queued
+         (FFmpeg etc.)      videoFrameChanged   QMutex/QWaitCondition   → scaled QPixmap            frameProcessed signal
+```
+
+## Design notes
+
+**Producer / consumer with intentional frame-dropping.** The GUI thread is the
+producer: `QVideoSink::videoFrameChanged` hands it each decoded frame, which it
+forwards to `VideoProcessingThread` (the consumer). The queue holds exactly one
+pending frame — if the worker is still busy scaling the previous frame when a new
+one arrives, `processFrame()` drops the new frame rather than buffering it. This
+bounds memory and latency under load, deliberately favouring smooth, low-latency
+playback over delivering every single frame. A frame-rate limiter (15 / 30 / 60
+FPS, by quality setting) further thins the stream before it reaches the queue.
+
+**Synchronization.** The single-slot queue is guarded by a `QMutex`, with a
+`QWaitCondition` coordinating producer and consumer. The worker blocks on
+`m_condition.wait(&m_mutex)` and is woken only when there is real work — a new
+frame (`processFrame()` calls `wakeOne()`) or a shutdown request
+(`stop()` calls `wakeAll()`). There is no polling timeout, so an idle worker
+consumes no CPU.
+
+**Cooperative shutdown.** Teardown never uses `QThread::terminate()`. `stop()`
+sets a `m_stopRequested` flag and wakes the condition; the thread's destructor
+then calls `wait()` to join it. The worker re-checks `m_stopRequested` at each
+stage of `run()`, so it always exits cleanly between frames and releases its
+resources deterministically — no thread is killed mid-operation.
+
+**Decoding vs. post-processing.** All demuxing and decoding is handled by Qt
+Multimedia (`QMediaPlayer` plus the platform backend, e.g. FFmpeg). The worker
+thread only post-processes already-decoded frames: `QVideoFrame` → `QImage`,
+aspect-correct scaling to the label size, and the quality-dependent
+transformation mode. The finished `QPixmap` is sent back to the GUI thread via a
+queued `frameProcessed` signal, because Qt widgets may only be painted on the
+GUI thread.
 
 ## Building from Source
 

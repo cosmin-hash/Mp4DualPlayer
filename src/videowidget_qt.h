@@ -25,11 +25,11 @@ public:
 
     void processFrame(QVideoFrame &&frame, const QSize &targetSize, int quality);
 
-    // Template metaprogramming: Generic frame processing with perfect forwarding
-    template <typename Frame, typename Size, typename Quality>
+    // Generic frame processing with perfect forwarding, constrained by the
+    // VideoFrame concept (rejects anything that is not a QVideoFrame).
+    template <AdvancedCpp::VideoFrame Frame, typename Size, typename Quality>
     void processFrameGeneric(Frame &&frame, Size &&targetSize, Quality &&quality)
     {
-        static_assert(AdvancedCpp::is_video_frame_v<std::decay_t<Frame>>, "Frame must be QVideoFrame");
         processFrame(std::forward<Frame>(frame), std::forward<Size>(targetSize), std::forward<Quality>(quality));
     }
     void stop();

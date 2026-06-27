@@ -13,13 +13,13 @@ VideoProcessingThread::VideoProcessingThread(QObject *parent)
 
 VideoProcessingThread::~VideoProcessingThread()
 {
-    // Don't call stop() - just terminate immediately
-    qDebug() << "VideoProcessingThread destructor: immediately terminating";
-    terminate();
-    if (!wait(10))
-    { // Give it only 10ms
-        qDebug() << "VideoProcessingThread still not terminated, forcing cleanup";
-    }
+    // Cooperative shutdown: request the worker to stop (sets m_stopRequested and
+    // wakes the wait condition), then wait() to join the thread cleanly. No
+    // terminate() - the worker is never killed mid-operation.
+    qDebug() << "VideoProcessingThread destructor: requesting cooperative stop";
+    stop();
+    wait();
+    qDebug() << "VideoProcessingThread destructor: worker joined";
 }
 
 void VideoProcessingThread::processFrame(QVideoFrame &&frame, const QSize &targetSize, int quality)
@@ -56,10 +56,12 @@ void VideoProcessingThread::run()
     {
         QMutexLocker locker(&m_mutex);
 
-        // Wait for a frame to process with extremely short timeout for maximum responsiveness
+        // Block until a new frame is enqueued (processFrame wakes us) or a stop
+        // is requested (stop() wakes us). No timeout, so the idle worker uses no
+        // CPU - there is no busy-wait.
         while (!m_hasPendingFrame && !m_stopRequested)
         {
-            m_condition.wait(&m_mutex, 1); // Extremely short timeout: 1ms for maximum responsiveness
+            m_condition.wait(&m_mutex);
         }
 
         if (m_stopRequested)
@@ -112,8 +114,8 @@ void VideoProcessingThread::run()
                 // Convert to pixmap using type-safe image processing
                 QPixmap pixmap = QPixmap::fromImage(std::move(image));
 
-                // Type safety check using template metaprogramming
-                static_assert(AdvancedCpp::is_image_type_v<QPixmap>, "QPixmap must be a valid image type");
+                // Type safety check using the ImageType concept
+                static_assert(AdvancedCpp::ImageType<QPixmap>, "QPixmap must be a valid image type");
 
                 emit frameProcessed(std::move(pixmap));
             }
@@ -287,15 +289,14 @@ VideoWidgetQt::~VideoWidgetQt()
         qDebug() << "Media player cleanup completed";
     }
 
-    // Stop processing thread with immediate forced cleanup - no waiting at all
+    // Stop the processing thread cooperatively, then destroy it. Resetting the
+    // unique_ptr runs ~VideoProcessingThread, which performs stop() + wait() to
+    // join the worker - no terminate(), no fixed timeout, no busy-wait.
     if (m_processingThread)
     {
         qDebug() << "Stopping processing thread...";
-        // Force immediate termination without any cleanup
-        m_processingThread->terminate();
-        m_processingThread->wait(10); // Only 10ms wait
-        qDebug() << "Immediately deleting processing thread...";
-        m_processingThread.reset();
+        m_processingThread->stop();
+        m_processingThread.reset(); // joins the worker via its destructor
         qDebug() << "Processing thread cleanup completed";
     }
 

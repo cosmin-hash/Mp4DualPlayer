@@ -8,6 +8,7 @@
 #include <QImage>
 #include <QPixmap>
 #include <type_traits>
+#include <concepts>
 #include <utility>
 
 namespace AdvancedCpp {
@@ -57,62 +58,38 @@ auto callWithForwarding(Func&& func, Args&&... args) -> decltype(func(std::forwa
 }
 
 // ============================================================================
-// TEMPLATE METAPROGRAMMING UTILITIES
+// C++20 CONCEPTS
 // ============================================================================
+//
+// These concepts replace the previous SFINAE/enable_if type-traits. They are
+// written to accept either a value type or a pointer to it (Qt connect/widget
+// helpers are normally called with QObject* pointers), and they ignore cv-ref
+// qualifiers so they work with forwarding references.
 
 /**
- * @brief Type trait to check if a type is a Qt widget
+ * @brief Satisfied by Qt widget types (or pointers to them).
  */
-template<typename T>
-struct is_qt_widget : std::is_base_of<QWidget, std::remove_pointer_t<T>> {};
-
-template<typename T>
-constexpr bool is_qt_widget_v = is_qt_widget<T>::value;
+template <typename T>
+concept QtWidget = std::is_base_of_v<QWidget, std::remove_pointer_t<std::decay_t<T>>>;
 
 /**
- * @brief Type trait to check if a type is a Qt object
+ * @brief Satisfied by Qt object types (or pointers to them).
  */
-template<typename T>
-struct is_qt_object : std::is_base_of<QObject, std::remove_pointer_t<T>> {};
-
-template<typename T>
-constexpr bool is_qt_object_v = is_qt_object<T>::value;
+template <typename T>
+concept QtObject = std::is_base_of_v<QObject, std::remove_pointer_t<std::decay_t<T>>>;
 
 /**
- * @brief Type trait to check if a type is a video frame type
+ * @brief Satisfied only by QVideoFrame (ignoring cv-ref qualifiers).
  */
-template<typename T>
-struct is_video_frame : std::is_same<T, QVideoFrame> {};
-
-template<typename T>
-constexpr bool is_video_frame_v = is_video_frame<T>::value;
+template <typename T>
+concept VideoFrame = std::is_same_v<std::decay_t<T>, QVideoFrame>;
 
 /**
- * @brief Type trait to check if a type is an image type
+ * @brief Satisfied by Qt image container types (QImage or QPixmap).
  */
-template<typename T>
-struct is_image_type : std::disjunction<
-    std::is_same<T, QImage>,
-    std::is_same<T, QPixmap>
-> {};
-
-template<typename T>
-constexpr bool is_image_type_v = is_image_type<T>::value;
-
-/**
- * @brief SFINAE helper for Qt widget operations
- */
-template<typename T>
-using enable_if_qt_widget = std::enable_if_t<is_qt_widget_v<T>, bool>;
-
-template<typename T>
-using enable_if_qt_object = std::enable_if_t<is_qt_object_v<T>, bool>;
-
-template<typename T>
-using enable_if_video_frame = std::enable_if_t<is_video_frame_v<T>, bool>;
-
-template<typename T>
-using enable_if_image_type = std::enable_if_t<is_image_type_v<T>, bool>;
+template <typename T>
+concept ImageType = std::is_same_v<std::decay_t<T>, QImage> ||
+                    std::is_same_v<std::decay_t<T>, QPixmap>;
 
 // ============================================================================
 // ADVANCED TEMPLATE FUNCTIONS
@@ -120,28 +97,27 @@ using enable_if_image_type = std::enable_if_t<is_image_type_v<T>, bool>;
 
 /**
  * @brief Generic widget configuration with perfect forwarding and type safety
- * @tparam Widget Widget type
+ * @tparam Widget Widget type (constrained by the QtWidget concept)
  * @tparam ConfigFunc Configuration function type
  * @tparam Args... Configuration arguments
  */
-template<typename Widget, typename ConfigFunc, typename... Args>
-enable_if_qt_widget<Widget> configureWidget(Widget&& widget, ConfigFunc&& configFunc, Args&&... args) {
-    static_assert(is_qt_widget_v<std::decay_t<Widget>>, "Widget must be a Qt widget type");
+template<QtWidget Widget, typename ConfigFunc, typename... Args>
+void configureWidget(Widget&& widget, ConfigFunc&& configFunc, Args&&... args) {
     configFunc(std::forward<Widget>(widget), std::forward<Args>(args)...);
 }
 
 /**
  * @brief Generic signal connection with type safety
- * @tparam Sender Sender type
+ *
+ * Constrained with the QtObject concept, so a non-QObject sender or receiver
+ * is rejected at the call site with a clear diagnostic.
+ * @tparam Sender Sender type (constrained by the QtObject concept)
  * @tparam Signal Signal type
- * @tparam Receiver Receiver type
+ * @tparam Receiver Receiver type (constrained by the QtObject concept)
  * @tparam Slot Slot type
  */
-template<typename Sender, typename Signal, typename Receiver, typename Slot>
-enable_if_qt_object<std::decay_t<Sender>> safeConnect(Sender&& sender, Signal&& signal, Receiver&& receiver, Slot&& slot) {
-    static_assert(is_qt_object_v<std::decay_t<Sender>>, "Sender must be a Qt object");
-    static_assert(is_qt_object_v<std::decay_t<Receiver>>, "Receiver must be a Qt object");
-
+template<QtObject Sender, typename Signal, QtObject Receiver, typename Slot>
+bool safeConnect(Sender&& sender, Signal&& signal, Receiver&& receiver, Slot&& slot) {
     return QObject::connect(
         std::forward<Sender>(sender),
         std::forward<Signal>(signal),
@@ -152,26 +128,24 @@ enable_if_qt_object<std::decay_t<Sender>> safeConnect(Sender&& sender, Signal&& 
 
 /**
  * @brief Generic frame processing with perfect forwarding
- * @tparam Frame Frame type
+ * @tparam Frame Frame type (constrained by the VideoFrame concept)
  * @tparam Processor Processing function type
  * @tparam Args... Processing arguments
  */
-template<typename Frame, typename Processor, typename... Args>
-enable_if_video_frame<std::decay_t<Frame>> processFrame(Frame&& frame, Processor&& processor, Args&&... args) {
-    static_assert(is_video_frame_v<std::decay_t<Frame>>, "Frame must be a QVideoFrame");
+template<VideoFrame Frame, typename Processor, typename... Args>
+bool processFrame(Frame&& frame, Processor&& processor, Args&&... args) {
     processor(std::forward<Frame>(frame), std::forward<Args>(args)...);
     return true;
 }
 
 /**
  * @brief Generic image processing with perfect forwarding
- * @tparam Image Image type
+ * @tparam Image Image type (constrained by the ImageType concept)
  * @tparam Processor Processing function type
  * @tparam Args... Processing arguments
  */
-template<typename Image, typename Processor, typename... Args>
-enable_if_image_type<std::decay_t<Image>> processImage(Image&& image, Processor&& processor, Args&&... args) {
-    static_assert(is_image_type_v<std::decay_t<Image>>, "Image must be QImage or QPixmap");
+template<ImageType Image, typename Processor, typename... Args>
+void processImage(Image&& image, Processor&& processor, Args&&... args) {
     processor(std::forward<Image>(image), std::forward<Args>(args)...);
 }
 
