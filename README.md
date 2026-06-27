@@ -8,9 +8,11 @@
 ![Platforms](https://img.shields.io/badge/platform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey)
 ![License](https://img.shields.io/badge/license-MIT-green)
 
-![Demo](docs/demo.gif)
+## Demo
 
-*Two MP4 files playing side by side, each with independent open / play / pause / stop controls.*
+_Demo video below — dual-display playback with live FPS and resolution overlays._
+
+<!-- VIDEO -->
 
 A modern Qt Widgets-based dual display MP4 media player with advanced C++20 features.
 

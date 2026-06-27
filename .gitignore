@@ -24,6 +24,10 @@ compile_commands.json
 .zencoder/
 .zenflow/
 
+# Large media — demo is uploaded via GitHub's web UI, not stored in the repo
+*.mp4
+*.gif
+
 # OS cruft
 Thumbs.db
 Desktop.ini
