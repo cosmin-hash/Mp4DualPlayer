@@ -1,0 +1,30 @@
+# Build output
+/build/
+build/
+*.o
+*.obj
+*.exe
+*.dll
+
+# CMake
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+compile_commands.json
+*.cmake.stamp
+
+# IDE / editor (machine-specific overrides, not shared config)
+.vscode/settings.local.json
+*.user
+*.code-workspace
+.idea/
+.cache/
+
+# AI tooling scaffolding (not needed to build)
+.zencoder/
+.zenflow/
+
+# OS cruft
+Thumbs.db
+Desktop.ini
+.DS_Store

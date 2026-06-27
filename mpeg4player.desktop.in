@@ -1,0 +1,12 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=MP4 Player
+Comment=Dual Display MP4 Media Player
+Exec=@CMAKE_INSTALL_PREFIX@/bin/Mpeg4Player
+Icon=@CMAKE_INSTALL_PREFIX@/share/pixmaps/mpeg4player.png
+Terminal=false
+Categories=AudioVideo;Player;Video;
+MimeType=video/mp4;video/quicktime;
+StartupNotify=true
+
