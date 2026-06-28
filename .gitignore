@@ -13,8 +13,8 @@ cmake_install.cmake
 compile_commands.json
 *.cmake.stamp
 
-# IDE / editor (machine-specific overrides, not shared config)
-.vscode/settings.local.json
+# IDE / editor (machine-specific, not shared)
+.vscode/
 *.user
 *.code-workspace
 .idea/
