@@ -13,8 +13,9 @@ cmake_install.cmake
 compile_commands.json
 *.cmake.stamp
 
-# IDE / editor (machine-specific, not shared)
+# IDE / editor / tool config (machine-specific, not shared)
 .vscode/
+.claude/
 *.user
 *.code-workspace
 .idea/
