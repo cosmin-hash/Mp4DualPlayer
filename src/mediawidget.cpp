@@ -99,20 +99,26 @@ void MediaWidget::setupUI()
     m_openButton->setIcon(style()->standardIcon(QStyle::SP_DirOpenIcon));
     m_openButton->setToolTip("Open MP4 File");
 
-    m_openButton->setFixedSize(32, 32);
-
     m_playButton->setIcon(style()->standardIcon(QStyle::SP_MediaPlay));
     m_playButton->setToolTip("Play");
-    m_playButton->setFixedSize(32, 32);
+    m_playButton->setObjectName("playButton"); // accent-styled primary action
 
     m_pauseButton->setIcon(style()->standardIcon(QStyle::SP_MediaPause));
     m_pauseButton->setToolTip("Pause");
-    m_pauseButton->setFixedSize(32, 32);
 
     m_stopButton->setIcon(style()->standardIcon(QStyle::SP_MediaStop));
     m_stopButton->setToolTip("Stop");
-    m_stopButton->setFixedSize(32, 32);
 
+    // Uniform modern sizing, crisp icons, and a pointing-hand cursor on hover.
+    for (QPushButton *btn : {m_openButton.get(), m_playButton.get(),
+                             m_pauseButton.get(), m_stopButton.get()})
+    {
+        btn->setFixedSize(38, 38);
+        btn->setIconSize(QSize(18, 18));
+        btn->setCursor(Qt::PointingHandCursor);
+    }
+
+    m_controlsLayout->setSpacing(8);
     m_controlsLayout->addWidget(m_openButton.get());
     m_controlsLayout->addWidget(m_playButton.get());
     m_controlsLayout->addWidget(m_pauseButton.get());
@@ -149,6 +155,55 @@ void MediaWidget::setupUI()
     m_mainLayout->addWidget(m_positionSlider.get());
     m_mainLayout->addLayout(statusLayout.release());
     m_mainLayout->addWidget(m_progressBar.get());
+
+    // Modern, flat control styling: circular buttons with hover/press feedback,
+    // an accent-tinted Play (primary action), and an accent progress slider.
+    setStyleSheet(QStringLiteral(R"(
+        QPushButton {
+            border: none;
+            border-radius: 19px;
+            background-color: #eceef3;
+        }
+        QPushButton:hover    { background-color: #dbe2f0; }
+        QPushButton:pressed  { background-color: #c6d2e8; }
+        QPushButton:disabled { background-color: #f3f4f7; }
+
+        QPushButton#playButton          { background-color: #d6e4f7; }
+        QPushButton#playButton:hover    { background-color: #c2d8f2; }
+        QPushButton#playButton:pressed  { background-color: #aecbee; }
+        QPushButton#playButton:disabled { background-color: #eef3fb; }
+
+        QComboBox {
+            border: 1px solid #d4d8e0;
+            border-radius: 6px;
+            padding: 3px 8px;
+            background: #ffffff;
+        }
+        QComboBox:hover { border-color: #4a90d9; }
+        QComboBox::drop-down { border: none; width: 18px; }
+
+        QSlider::groove:horizontal {
+            height: 6px;
+            background: #e2e5ea;
+            border-radius: 3px;
+        }
+        QSlider::sub-page:horizontal {
+            background: #4a90d9;
+            border-radius: 3px;
+        }
+        QSlider::add-page:horizontal {
+            background: #e2e5ea;
+            border-radius: 3px;
+        }
+        QSlider::handle:horizontal {
+            width: 14px;
+            margin: -5px 0;
+            border-radius: 7px;
+            background: #4a90d9;
+        }
+        QSlider::handle:horizontal:hover    { background: #357abd; }
+        QSlider::handle:horizontal:disabled { background: #b9c0cc; }
+    )"));
 
     // Configure position timer
     m_positionTimer->setInterval(100); // Update every 100ms
