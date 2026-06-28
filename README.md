@@ -2,6 +2,7 @@
 
 > A dual-display MP4 media player built with Qt 6 Widgets and modern C++20.
 
+![CI](https://github.com/cosmin-hash/Mp4DualPlayer/actions/workflows/ci.yml/badge.svg)
 ![Qt](https://img.shields.io/badge/Qt-6-41CD52?logo=qt&logoColor=white)
 ![C++](https://img.shields.io/badge/C%2B%2B-20-00599C?logo=cplusplus&logoColor=white)
 ![CMake](https://img.shields.io/badge/CMake-3.16%2B-064F8C?logo=cmake&logoColor=white)
