@@ -1,9 +1,3 @@
-
-
-https://github.com/user-attachments/assets/fbdabfc8-e881-4ef0-a88b-1bf46633d879
-
-
-
 # MP4 Player - Qt Widgets Version
 
 > A dual-display MP4 media player built with Qt 6 Widgets and modern C++20.
@@ -16,9 +10,9 @@ https://github.com/user-attachments/assets/fbdabfc8-e881-4ef0-a88b-1bf46633d879
 
 ## Demo
 
-_Demo video below — dual-display playback with live FPS and resolution overlays._
+_Dual-display playback with live FPS and resolution overlays._
 
-<!-- VIDEO -->
+https://github.com/user-attachments/assets/fbdabfc8-e881-4ef0-a88b-1bf46633d879
 
 A modern Qt Widgets-based dual display MP4 media player with advanced C++20 features.
 
