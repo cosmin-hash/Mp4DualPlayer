@@ -158,12 +158,11 @@ real 4-request / 2-worker concurrent inference against a local GGUF model.
 
 ### Still open
 
-**Other missing includes (21).** Same class as the `<algorithm>` fix, not yet
-applied: `<utility>` (`std::move`/`forward`) is the bulk of it, plus `<memory>`,
-`<string>`, `<functional>`, `<optional>`, `<vector>`, `<cstdint>`. Concentrated in
-`Threading/concurrency-03`, `ConcurrentInferenceServer`, and `Mp4DualPlayer`.
-These compile today only via transitive includes. A further 27 findings are
-covered by each file's paired header and are lower risk.
+**Remaining include hygiene (27).** Every direct gap is fixed -- `<algorithm>`
+plus `<utility>`, `<memory>`, `<string>`, `<functional>`, `<optional>`,
+`<vector>` and `<cstdint>` are now included where used. What remains are 27
+findings that each file's *paired header* already satisfies, so they are
+correct today and only a tidiness question, not a fragility one.
 
 **`_WERROR` is still OFF** in all five repos. Every project is warning-free, so
 it can be turned on whenever you want CI to enforce it.
