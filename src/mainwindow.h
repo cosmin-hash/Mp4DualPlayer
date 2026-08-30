@@ -7,25 +7,24 @@
 #include <memory>
 #include "mediawidget.h"
 
-class MainWindow : public QMainWindow
-{
+class MainWindow : public QMainWindow {
     Q_OBJECT
 
 public:
-    MainWindow(QWidget *parent = nullptr);
+    MainWindow(QWidget* parent = nullptr);
     ~MainWindow();
 
     // Move semantics for performance
-    MainWindow(MainWindow &&other) noexcept = default;
-    MainWindow &operator=(MainWindow &&other) noexcept = default;
+    MainWindow(MainWindow&& other) noexcept = default;
+    MainWindow& operator=(MainWindow&& other) noexcept = default;
 
     // Disable copy semantics (Qt objects should not be copied)
-    MainWindow(const MainWindow &) = delete;
-    MainWindow &operator=(const MainWindow &) = delete;
+    MainWindow(const MainWindow&) = delete;
+    MainWindow& operator=(const MainWindow&) = delete;
 
 protected:
-    void resizeEvent(QResizeEvent *event) override;
-    void closeEvent(QCloseEvent *event) override;
+    void resizeEvent(QResizeEvent* event) override;
+    void closeEvent(QCloseEvent* event) override;
 
 private:
     void setupUI();

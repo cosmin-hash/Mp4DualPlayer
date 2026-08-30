@@ -16,27 +16,26 @@
 #include <utility>   // std::forward
 #include "advanced_cpp_features.h"
 
-class VideoProcessingThread : public QThread
-{
+class VideoProcessingThread : public QThread {
     Q_OBJECT
 
 public:
-    VideoProcessingThread(QObject *parent = nullptr);
+    VideoProcessingThread(QObject* parent = nullptr);
     ~VideoProcessingThread();
 
-    void processFrame(QVideoFrame &&frame, const QSize &targetSize, int quality);
+    void processFrame(QVideoFrame&& frame, const QSize& targetSize, int quality);
 
     // Generic frame processing with perfect forwarding, constrained by the
     // VideoFrame concept (rejects anything that is not a QVideoFrame).
     template <AdvancedCpp::VideoFrame Frame, typename Size, typename Quality>
-    void processFrameGeneric(Frame &&frame, Size &&targetSize, Quality &&quality)
-    {
-        processFrame(std::forward<Frame>(frame), std::forward<Size>(targetSize), std::forward<Quality>(quality));
+    void processFrameGeneric(Frame&& frame, Size&& targetSize, Quality&& quality) {
+        processFrame(std::forward<Frame>(frame), std::forward<Size>(targetSize),
+                     std::forward<Quality>(quality));
     }
     void stop();
 
 signals:
-    void frameProcessed(const QPixmap &pixmap);
+    void frameProcessed(const QPixmap& pixmap);
 
 protected:
     void run() override;
@@ -46,8 +45,7 @@ private:
     QWaitCondition m_condition;
     bool m_stopRequested;
 
-    struct FrameData
-    {
+    struct FrameData {
         QVideoFrame frame;
         QSize targetSize;
         int quality;
@@ -57,21 +55,20 @@ private:
     bool m_hasPendingFrame;
 };
 
-class VideoWidgetQt : public QWidget
-{
+class VideoWidgetQt : public QWidget {
     Q_OBJECT
 
 public:
-    explicit VideoWidgetQt(QWidget *parent = nullptr);
+    explicit VideoWidgetQt(QWidget* parent = nullptr);
     ~VideoWidgetQt();
 
     // Move semantics for performance
-    VideoWidgetQt(VideoWidgetQt &&other) noexcept = default;
-    VideoWidgetQt &operator=(VideoWidgetQt &&other) noexcept = default;
+    VideoWidgetQt(VideoWidgetQt&& other) noexcept = default;
+    VideoWidgetQt& operator=(VideoWidgetQt&& other) noexcept = default;
 
     // Disable copy semantics (Qt objects should not be copied)
-    VideoWidgetQt(const VideoWidgetQt &) = delete;
-    VideoWidgetQt &operator=(const VideoWidgetQt &) = delete;
+    VideoWidgetQt(const VideoWidgetQt&) = delete;
+    VideoWidgetQt& operator=(const VideoWidgetQt&) = delete;
 
     void loadVideo(QString fileName);
     void play();
@@ -89,22 +86,20 @@ public:
 
     // Template metaprogramming: Generic frame rate setting with compile-time validation
     template <int FPS>
-    void setMaxFrameRateTemplate()
-    {
+    void setMaxFrameRateTemplate() {
         static_assert(FPS >= 5 && FPS <= 120, "Frame rate must be between 5 and 120 FPS");
         setMaxFrameRate(FPS);
     }
 
     // Template metaprogramming: Generic quality setting with compile-time validation
     template <AdvancedCpp::QualityLevel Level>
-    void setVideoQualityTemplate()
-    {
+    void setVideoQualityTemplate() {
         setVideoQuality(static_cast<int>(Level));
         setMaxFrameRate(AdvancedCpp::QualitySettings<Level>::fps);
-    } // 0=low, 1=medium, 2=high
+    }   // 0=low, 1=medium, 2=high
 
 protected:
-    void resizeEvent(QResizeEvent *event) override;
+    void resizeEvent(QResizeEvent* event) override;
 
 signals:
     void videoLoaded();
@@ -114,7 +109,7 @@ signals:
     void playbackStarted();
     void playbackPaused();
     void fpsChanged(double fps);
-    void resolutionChanged(const QSize &resolution);
+    void resolutionChanged(const QSize& resolution);
 
 private slots:
     void onMediaStatusChanged(QMediaPlayer::MediaStatus status);
@@ -138,7 +133,7 @@ private:
     int m_maxFrameRate;
     int m_videoQuality;
     QSize m_lastVideoSize;
-    static const int DEFAULT_FRAME_SKIP_MS = 33; // ~30 FPS max for high-res videos
+    static const int DEFAULT_FRAME_SKIP_MS = 33;   // ~30 FPS max for high-res videos
 
     // FPS tracking
     QElapsedTimer m_fpsTimer;

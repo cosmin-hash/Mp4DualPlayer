@@ -15,21 +15,20 @@
 #include "videowidget_qt.h"
 #include "advanced_cpp_features.h"
 
-class MediaWidget : public QWidget
-{
+class MediaWidget : public QWidget {
     Q_OBJECT
 
 public:
-    explicit MediaWidget(QString displayName, QWidget *parent = nullptr);
+    explicit MediaWidget(QString displayName, QWidget* parent = nullptr);
     ~MediaWidget();
 
     // Move semantics for performance
-    MediaWidget(MediaWidget &&other) noexcept = default;
-    MediaWidget &operator=(MediaWidget &&other) noexcept = default;
+    MediaWidget(MediaWidget&& other) noexcept = default;
+    MediaWidget& operator=(MediaWidget&& other) noexcept = default;
 
     // Disable copy semantics (Qt objects should not be copied)
-    MediaWidget(const MediaWidget &) = delete;
-    MediaWidget &operator=(const MediaWidget &) = delete;
+    MediaWidget(const MediaWidget&) = delete;
+    MediaWidget& operator=(const MediaWidget&) = delete;
 
     // Public interface
     void loadVideo(QString fileName);
@@ -48,35 +47,26 @@ public:
     void setVideoQuality(int quality);
 
     // Video widget type selection (simplified - only software now)
-    enum class VideoWidgetType
-    {
-        Software // Force software widget
+    enum class VideoWidgetType {
+        Software   // Force software widget
     };
     void setVideoWidgetType(VideoWidgetType type);
     VideoWidgetType currentVideoWidgetType() const;
 
     // Template metaprogramming: Generic quality setting with compile-time validation
     template <AdvancedCpp::QualityLevel Level>
-    void setQualityTemplate()
-    {
+    void setQualityTemplate() {
         static_assert(Level >= AdvancedCpp::QualityLevel::Low && Level <= AdvancedCpp::QualityLevel::High,
                       "Quality level must be Low, Medium, or High");
         m_qualityCombo->setCurrentIndex(static_cast<int>(Level));
-        if (m_videoWidgetQt)
-        {
-            m_videoWidgetQt->setVideoQualityTemplate<Level>();
-        }
+        if (m_videoWidgetQt) { m_videoWidgetQt->setVideoQualityTemplate<Level>(); }
     }
 
     // Template metaprogramming: Generic frame rate setting with compile-time validation
     template <int FPS>
-    void setFrameRateTemplate()
-    {
+    void setFrameRateTemplate() {
         static_assert(FPS >= 5 && FPS <= 120, "Frame rate must be between 5 and 120 FPS");
-        if (m_videoWidgetQt)
-        {
-            m_videoWidgetQt->setMaxFrameRateTemplate<FPS>();
-        }
+        if (m_videoWidgetQt) { m_videoWidgetQt->setMaxFrameRateTemplate<FPS>(); }
     }
 
 signals:
@@ -101,7 +91,7 @@ private slots:
     void onPositionChanged(double position);
     void onDurationChanged(double duration);
     void onFpsChanged(double fps);
-    void onResolutionChanged(const QSize &resolution);
+    void onResolutionChanged(const QSize& resolution);
 
 private:
     void setupUI();
@@ -111,11 +101,11 @@ private:
     // Video widget management
     void createVideoWidget();
     void destroyVideoWidget();
-    QWidget *getCurrentVideoWidget() const;
-    VideoWidgetQt *getVideoWidgetQt() const;
+    QWidget* getCurrentVideoWidget() const;
+    VideoWidgetQt* getVideoWidgetQt() const;
 
     // Helper methods for video widget operations
-    void loadVideoOnCurrentWidget(const QString &fileName);
+    void loadVideoOnCurrentWidget(const QString& fileName);
     void playCurrentWidget();
     void pauseCurrentWidget();
     void stopCurrentWidget();

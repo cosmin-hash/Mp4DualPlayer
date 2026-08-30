@@ -11,14 +11,13 @@
 #include <fcntl.h>
 #endif
 
-int main(int argc, char *argv[])
-{
+int main(int argc, char* argv[]) {
 // Enable console window for Windows to see debug output
 #ifdef _WIN32
     AllocConsole();
-    freopen_s((FILE **)stdout, "CONOUT$", "w", stdout);
-    freopen_s((FILE **)stderr, "CONOUT$", "w", stderr);
-    freopen_s((FILE **)stdin, "CONIN$", "r", stdin);
+    freopen_s((FILE**)stdout, "CONOUT$", "w", stdout);
+    freopen_s((FILE**)stderr, "CONOUT$", "w", stderr);
+    freopen_s((FILE**)stdin, "CONIN$", "r", stdin);
 #endif
 
     // Configure Qt logging rules to suppress noisy painting/QPA messages
@@ -29,11 +28,13 @@ int main(int argc, char *argv[])
 #ifdef DEBUG
     // In debug builds, keep useful multimedia debug info but disable
     // very noisy GUI painting and QPA internals.
-    loggingRules = "qt.widgets.painting=false;qt.qpa.window=false;qt.qpa.events=false;qt.multimedia.debug=true";
+    loggingRules =
+        "qt.widgets.painting=false;qt.qpa.window=false;qt.qpa.events=false;qt.multimedia.debug=true";
 #else
     // In non-debug builds, disable the noisy categories and other
     // subsystems we don't want printed in normal runs.
-    loggingRules = "qt.widgets.painting=false;qt.qpa.window=false;qt.qpa.events=false;qt.multimedia.debug=false;qt.opengl.debug=false";
+    loggingRules = "qt.widgets.painting=false;qt.qpa.window=false;qt.qpa.events=false;qt.multimedia.debug="
+                   "false;qt.opengl.debug=false";
 #endif
     qputenv("QT_LOGGING_RULES", loggingRules);
     qputenv("QT_FORCE_STDERR_LOGGING", "1");
@@ -42,11 +43,9 @@ int main(int argc, char *argv[])
     std::cout << "====================================" << std::endl;
 
     // Check for help argument
-    for (int i = 1; i < argc; ++i)
-    {
+    for (int i = 1; i < argc; ++i) {
         QString arg = argv[i];
-        if (arg == "--help" || arg == "-h")
-        {
+        if (arg == "--help" || arg == "-h") {
             std::cout << "Usage: Mpeg4Player [options]" << std::endl;
             std::cout << "Options:" << std::endl;
             std::cout << "  --help, -h      Show this help" << std::endl;

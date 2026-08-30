@@ -5,9 +5,12 @@
 #include <QThread>
 #include <iostream>
 
-MainWindow::MainWindow(QWidget *parent)
-    : QMainWindow(parent), m_centralWidget(std::make_unique<QWidget>(this)), m_mainLayout(std::make_unique<QVBoxLayout>(m_centralWidget.get())), m_mediaSplitter(std::make_unique<QSplitter>(Qt::Horizontal, this)), m_mediaWidget1(std::make_unique<MediaWidget>(QString("Display 1"), this)), m_mediaWidget2(std::make_unique<MediaWidget>(QString("Display 2"), this))
-{
+MainWindow::MainWindow(QWidget* parent)
+    : QMainWindow(parent), m_centralWidget(std::make_unique<QWidget>(this)),
+      m_mainLayout(std::make_unique<QVBoxLayout>(m_centralWidget.get())),
+      m_mediaSplitter(std::make_unique<QSplitter>(Qt::Horizontal, this)),
+      m_mediaWidget1(std::make_unique<MediaWidget>(QString("Display 1"), this)),
+      m_mediaWidget2(std::make_unique<MediaWidget>(QString("Display 2"), this)) {
     // Both widgets use software rendering
     m_mediaWidget1->setVideoWidgetType(MediaWidget::VideoWidgetType::Software);
     m_mediaWidget2->setVideoWidgetType(MediaWidget::VideoWidgetType::Software);
@@ -17,26 +20,22 @@ MainWindow::MainWindow(QWidget *parent)
     setupConnections();
 }
 
-MainWindow::~MainWindow()
-{
+MainWindow::~MainWindow() {
     // Stop and cleanup media widgets with timeout protection
-    if (m_mediaWidget1)
-    {
+    if (m_mediaWidget1) {
         m_mediaWidget1->stop();
-        QApplication::processEvents(); // Process any pending events
-        QThread::msleep(100);          // Give time for cleanup
+        QApplication::processEvents();   // Process any pending events
+        QThread::msleep(100);            // Give time for cleanup
     }
 
-    if (m_mediaWidget2)
-    {
+    if (m_mediaWidget2) {
         m_mediaWidget2->stop();
-        QApplication::processEvents(); // Process any pending events
-        QThread::msleep(100);          // Give time for cleanup
+        QApplication::processEvents();   // Process any pending events
+        QThread::msleep(100);            // Give time for cleanup
     }
 
     // Force process any remaining events before destruction
-    for (int i = 0; i < 3; ++i)
-    {
+    for (int i = 0; i < 3; ++i) {
         QApplication::processEvents();
         QThread::msleep(50);
     }
@@ -44,8 +43,7 @@ MainWindow::~MainWindow()
     // Smart pointers will automatically clean up in reverse order of declaration
 }
 
-void MainWindow::setupUI()
-{
+void MainWindow::setupUI() {
     qDebug() << "Setting up UI...";
 
     setCentralWidget(m_centralWidget.get());
@@ -64,15 +62,14 @@ void MainWindow::setupUI()
     // Set splitter properties
     m_mediaSplitter->setChildrenCollapsible(false);
     m_mediaSplitter->setHandleWidth(8);
-    m_mediaSplitter->setStyleSheet(
-        "QSplitter::handle {"
-        "    background-color: #cccccc;"
-        "    border: 1px solid #999999;"
-        "    margin: 2px;"
-        "}"
-        "QSplitter::handle:hover {"
-        "    background-color: #aaaaaa;"
-        "}");
+    m_mediaSplitter->setStyleSheet("QSplitter::handle {"
+                                   "    background-color: #cccccc;"
+                                   "    border: 1px solid #999999;"
+                                   "    margin: 2px;"
+                                   "}"
+                                   "QSplitter::handle:hover {"
+                                   "    background-color: #aaaaaa;"
+                                   "}");
 
     // Add splitter to main layout
     m_mainLayout->addWidget(m_mediaSplitter.get());
@@ -84,8 +81,7 @@ void MainWindow::setupUI()
     qDebug() << "UI setup completed";
 }
 
-void MainWindow::setupConnections()
-{
+void MainWindow::setupConnections() {
     qDebug() << "Setting up connections...";
 
     // Connect media widget signals if needed for global actions
@@ -94,40 +90,34 @@ void MainWindow::setupConnections()
     qDebug() << "Connections setup completed";
 }
 
-void MainWindow::resizeEvent(QResizeEvent *event)
-{
+void MainWindow::resizeEvent(QResizeEvent* event) {
     QMainWindow::resizeEvent(event);
 
     // Keep the splitter centered when the main window is resized
-    if (m_mediaSplitter)
-    {
+    if (m_mediaSplitter) {
         // Set equal sizes to keep the splitter in the middle
         m_mediaSplitter->setSizes({1, 1});
     }
 }
 
-void MainWindow::closeEvent(QCloseEvent *event)
-{
+void MainWindow::closeEvent(QCloseEvent* event) {
     qDebug() << "MainWindow closeEvent triggered";
 
     // Stop all media widgets before closing
-    if (m_mediaWidget1)
-    {
+    if (m_mediaWidget1) {
         qDebug() << "Stopping media widget 1 before close...";
         m_mediaWidget1->stop();
     }
 
-    if (m_mediaWidget2)
-    {
+    if (m_mediaWidget2) {
         qDebug() << "Stopping media widget 2 before close...";
         m_mediaWidget2->stop();
     }
 
     // Give more time for cleanup and force process events
-    for (int i = 0; i < 5; ++i)
-    {
+    for (int i = 0; i < 5; ++i) {
         QApplication::processEvents();
-        QThread::msleep(50); // Small delay to allow cleanup
+        QThread::msleep(50);   // Small delay to allow cleanup
     }
 
     qDebug() << "MainWindow closeEvent completed";

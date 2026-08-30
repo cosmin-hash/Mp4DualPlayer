@@ -25,15 +25,11 @@ namespace AdvancedCpp {
  * @tparam Slot Slot type (member function pointer)
  * @tparam Args... Perfect forwarded arguments
  */
-template<typename Sender, typename Signal, typename Receiver, typename Slot, typename... Args>
-void connectWithForwarding(Sender&& sender, Signal&& signal, Receiver&& receiver, Slot&& slot, Args&&... args) {
-    QObject::connect(
-        std::forward<Sender>(sender),
-        std::forward<Signal>(signal),
-        std::forward<Receiver>(receiver),
-        std::forward<Slot>(slot),
-        std::forward<Args>(args)...
-    );
+template <typename Sender, typename Signal, typename Receiver, typename Slot, typename... Args>
+void connectWithForwarding(Sender&& sender, Signal&& signal, Receiver&& receiver, Slot&& slot,
+                           Args&&... args) {
+    QObject::connect(std::forward<Sender>(sender), std::forward<Signal>(signal),
+                     std::forward<Receiver>(receiver), std::forward<Slot>(slot), std::forward<Args>(args)...);
 }
 
 /**
@@ -42,7 +38,7 @@ void connectWithForwarding(Sender&& sender, Signal&& signal, Receiver&& receiver
  * @tparam Property Property type
  * @tparam Value Value type
  */
-template<typename Widget, typename Property, typename Value>
+template <typename Widget, typename Property, typename Value>
 void setPropertyWithForwarding(Widget&& widget, Property&& property, Value&& value) {
     widget->setProperty(std::forward<Property>(property), std::forward<Value>(value));
 }
@@ -52,7 +48,7 @@ void setPropertyWithForwarding(Widget&& widget, Property&& property, Value&& val
  * @tparam Func Function type
  * @tparam Args... Argument types
  */
-template<typename Func, typename... Args>
+template <typename Func, typename... Args>
 auto callWithForwarding(Func&& func, Args&&... args) -> decltype(func(std::forward<Args>(args)...)) {
     return func(std::forward<Args>(args)...);
 }
@@ -88,8 +84,7 @@ concept VideoFrame = std::is_same_v<std::decay_t<T>, QVideoFrame>;
  * @brief Satisfied by Qt image container types (QImage or QPixmap).
  */
 template <typename T>
-concept ImageType = std::is_same_v<std::decay_t<T>, QImage> ||
-                    std::is_same_v<std::decay_t<T>, QPixmap>;
+concept ImageType = std::is_same_v<std::decay_t<T>, QImage> || std::is_same_v<std::decay_t<T>, QPixmap>;
 
 // ============================================================================
 // ADVANCED TEMPLATE FUNCTIONS
@@ -101,7 +96,7 @@ concept ImageType = std::is_same_v<std::decay_t<T>, QImage> ||
  * @tparam ConfigFunc Configuration function type
  * @tparam Args... Configuration arguments
  */
-template<QtWidget Widget, typename ConfigFunc, typename... Args>
+template <QtWidget Widget, typename ConfigFunc, typename... Args>
 void configureWidget(Widget&& widget, ConfigFunc&& configFunc, Args&&... args) {
     configFunc(std::forward<Widget>(widget), std::forward<Args>(args)...);
 }
@@ -116,14 +111,10 @@ void configureWidget(Widget&& widget, ConfigFunc&& configFunc, Args&&... args) {
  * @tparam Receiver Receiver type (constrained by the QtObject concept)
  * @tparam Slot Slot type
  */
-template<QtObject Sender, typename Signal, QtObject Receiver, typename Slot>
+template <QtObject Sender, typename Signal, QtObject Receiver, typename Slot>
 bool safeConnect(Sender&& sender, Signal&& signal, Receiver&& receiver, Slot&& slot) {
-    return QObject::connect(
-        std::forward<Sender>(sender),
-        std::forward<Signal>(signal),
-        std::forward<Receiver>(receiver),
-        std::forward<Slot>(slot)
-    );
+    return QObject::connect(std::forward<Sender>(sender), std::forward<Signal>(signal),
+                            std::forward<Receiver>(receiver), std::forward<Slot>(slot));
 }
 
 /**
@@ -132,7 +123,7 @@ bool safeConnect(Sender&& sender, Signal&& signal, Receiver&& receiver, Slot&& s
  * @tparam Processor Processing function type
  * @tparam Args... Processing arguments
  */
-template<VideoFrame Frame, typename Processor, typename... Args>
+template <VideoFrame Frame, typename Processor, typename... Args>
 bool processFrame(Frame&& frame, Processor&& processor, Args&&... args) {
     processor(std::forward<Frame>(frame), std::forward<Args>(args)...);
     return true;
@@ -144,11 +135,10 @@ bool processFrame(Frame&& frame, Processor&& processor, Args&&... args) {
  * @tparam Processor Processing function type
  * @tparam Args... Processing arguments
  */
-template<ImageType Image, typename Processor, typename... Args>
+template <ImageType Image, typename Processor, typename... Args>
 void processImage(Image&& image, Processor&& processor, Args&&... args) {
     processor(std::forward<Image>(image), std::forward<Args>(args)...);
 }
-
 
 // ============================================================================
 // COMPILE-TIME CONSTANTS AND UTILITIES
@@ -157,7 +147,7 @@ void processImage(Image&& image, Processor&& processor, Args&&... args) {
 /**
  * @brief Compile-time frame rate limits
  */
-template<int FPS>
+template <int FPS>
 struct FrameRateLimits {
     static_assert(FPS >= 5 && FPS <= 120, "Frame rate must be between 5 and 120 FPS");
     static constexpr int minFPS = 5;
@@ -169,17 +159,12 @@ struct FrameRateLimits {
 /**
  * @brief Compile-time quality settings
  */
-enum class QualityLevel : int {
-    Low = 0,
-    Medium = 1,
-    High = 2
-};
+enum class QualityLevel : int { Low = 0, Medium = 1, High = 2 };
 
-template<QualityLevel Level>
+template <QualityLevel Level>
 struct QualitySettings {
     static constexpr QualityLevel level = Level;
-    static constexpr int fps = (Level == QualityLevel::Low) ? 15 :
-                              (Level == QualityLevel::Medium) ? 30 : 60;
+    static constexpr int fps = (Level == QualityLevel::Low) ? 15 : (Level == QualityLevel::Medium) ? 30 : 60;
     static constexpr Qt::TransformationMode transformMode =
         (Level == QualityLevel::Low) ? Qt::FastTransformation : Qt::SmoothTransformation;
 };
@@ -193,9 +178,9 @@ struct QualitySettings {
  * @tparam Func Lambda function type
  * @tparam Args... Argument types
  */
-template<typename Func, typename... Args>
+template <typename Func, typename... Args>
 auto forwardLambda(Func&& func, Args&&... args) {
-    return [func = std::forward<Func>(func), ...args = std::forward<Args>(args)]() mutable {
+    return [func = std::forward<Func>(func), ... args = std::forward<Args>(args)]() mutable {
         return func(std::forward<Args>(args)...);
     };
 }
@@ -205,12 +190,12 @@ auto forwardLambda(Func&& func, Args&&... args) {
  * @tparam Func Lambda function type
  * @tparam Args... Captured argument types
  */
-template<typename Func, typename... Args>
+template <typename Func, typename... Args>
 auto qtSignalLambda(Func&& func, Args&&... args) {
     static_assert(std::is_invocable_v<Func, Args...>, "Function must be invocable with provided arguments");
-    return [func = std::forward<Func>(func), ...args = std::forward<Args>(args)]() mutable {
+    return [func = std::forward<Func>(func), ... args = std::forward<Args>(args)]() mutable {
         return func(std::forward<Args>(args)...);
     };
 }
 
-} // namespace AdvancedCpp
+}   // namespace AdvancedCpp
