@@ -1,0 +1,27 @@
+# Shared editor settings for cosmin's public projects.
+# Pins indent and line endings so a clone on Linux/macOS matches Windows.
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+indent_style = space
+indent_size = 4
+
+[*.{c,cpp,cc,h,hpp,cu,cuh,vert,frag,glsl}]
+indent_size = 4
+max_line_length = 110
+
+[*.{yml,yaml,json}]
+indent_size = 2
+
+[*.md]
+trim_trailing_whitespace = false
+
+[{CMakeLists.txt,*.cmake}]
+indent_size = 4
+
+[*.{bat,cmd}]
+end_of_line = crlf

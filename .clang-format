@@ -1,0 +1,58 @@
+# Shared C++ style for cosmin's public projects.
+# Derived from the existing sources (Threading, QtOpenGLQuadPlayers, PBRViewer),
+# which already agree on this shape -- NOT a stock preset. Stock LLVM would be
+# 2-space / 80-col and would rewrite every line of every repo.
+#
+# This file covers MECHANICS ONLY (indent, braces, alignment, wrapping).
+# Naming rules are per-project and live in .clang-tidy, because
+# ConcurrentInferenceServer deliberately uses STL-style snake_case.
+Language: Cpp
+BasedOnStyle: LLVM
+Standard: c++20
+
+IndentWidth: 4
+TabWidth: 4
+UseTab: Never
+ColumnLimit: 110
+AccessModifierOffset: -4
+NamespaceIndentation: None
+IndentCaseLabels: true
+
+BreakBeforeBraces: Attach
+PointerAlignment: Left
+ReferenceAlignment: Left
+Cpp11BracedListStyle: true
+
+
+
+# These keep the codebases' compact one-line accessors and guard clauses intact
+# instead of exploding them across three lines each.
+AllowShortFunctionsOnASingleLine:
+  Empty: true
+  Inline: true
+  Other: true
+AllowShortBlocksOnASingleLine: Always
+AllowShortIfStatementsOnASingleLine: AllIfsAndElse
+AllowShortLoopsOnASingleLine: true
+AllowShortCaseLabelsOnASingleLine: true
+AllowShortLambdasOnASingleLine: All
+
+# Includes are grouped by intent (Qt, then std), not alphabetised.
+# Sorting them would churn every file across all five repos for no benefit.
+# The sources put 3 spaces before a trailing comment and align runs of them.
+# clang-format collapses to 1 by default, which alone accounts for a large share
+# of the reformat diff across all five repos.
+SpacesBeforeTrailingComments: 3
+AlignTrailingComments:
+  Kind: Always
+  OverEmptyLines: 0
+
+SortIncludes: Never
+
+MaxEmptyLinesToKeep: 1
+KeepEmptyLines:
+  AtStartOfBlock: false
+  AtStartOfFile: true
+  AtEndOfFile: false
+ReflowComments: Always
+BreakTemplateDeclarations: Yes

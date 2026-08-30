@@ -1,0 +1,18 @@
+# Normalise line endings so the repo behaves the same on every OS.
+# The repo always stores LF; `text=auto` lets git convert on checkout for
+# developers with core.autocrlf=true (which is the case on this machine).
+# This is what makes .editorconfig's `end_of_line = lf` hold in the repo.
+* text=auto
+
+# Shell scripts must stay LF or they won't run on Linux/macOS.
+*.sh text eol=lf
+
+# Windows scripts stay CRLF.
+*.bat text eol=crlf
+*.cmd text eol=crlf
+*.ps1 text eol=crlf
+
+# Binary assets.
+*.png binary
+*.jpg binary
+*.ico binary

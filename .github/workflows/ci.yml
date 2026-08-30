@@ -31,3 +31,24 @@ jobs:
 
       - name: Show build output
         run: ls -la build && file build/Mpeg4Player
+
+  format:
+    name: clang-format
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install clang-format
+        run: pipx install clang-format==23.1.0
+
+      # Deliberately NON-BLOCKING for now. Adopting clang-format on
+      # hand-formatted code is a one-time reformat of roughly a quarter to a
+      # half of all lines (measured per repo -- see STANDARD.md). Until that
+      # normalisation commit lands, this job reports drift without failing CI.
+      #
+      # To make it a hard gate, delete the `continue-on-error` line below.
+      - name: Check formatting
+        continue-on-error: true
+        run: |
+          clang-format --version
+          find . -type d \( -name build -o -name 'build-*' -o -name .git                              -o -name '*_autogen' -o -name _deps \) -prune -o                -type f \( -name '*.cpp' -o -name '*.h' -o -name '*.hpp' \) -print0             | xargs -0 -r clang-format --dry-run --Werror

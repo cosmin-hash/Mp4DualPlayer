@@ -114,6 +114,42 @@ set(HEADERS
 )
 
 # Create executable
+# --- Shared warning configuration (see STANDARD.md) -------------------------
+# Carried by an INTERFACE target so the flags apply to our own code only and
+# never leak into vendored dependencies pulled in by FetchContent or
+# add_subdirectory. Scoped to CXX so they never reach nvcc, which treats /W4
+# and friends as input files and fails.
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+option(${PROJECT_NAME}_WERROR "Treat compiler warnings as errors" OFF)
+
+add_library(project_warnings INTERFACE)
+if(MSVC)
+    target_compile_options(project_warnings INTERFACE
+        $<$<COMPILE_LANGUAGE:CXX>:/W4>
+        $<$<COMPILE_LANGUAGE:CXX>:/permissive->)
+    if(${PROJECT_NAME}_WERROR)
+        target_compile_options(project_warnings INTERFACE $<$<COMPILE_LANGUAGE:CXX>:/WX>)
+    endif()
+else()
+    target_compile_options(project_warnings INTERFACE
+        $<$<COMPILE_LANGUAGE:CXX>:-Wall>
+        $<$<COMPILE_LANGUAGE:CXX>:-Wextra>
+        $<$<COMPILE_LANGUAGE:CXX>:-Wpedantic>
+        $<$<COMPILE_LANGUAGE:CXX>:-Wnon-virtual-dtor>
+        $<$<COMPILE_LANGUAGE:CXX>:-Woverloaded-virtual>
+        $<$<COMPILE_LANGUAGE:CXX>:-Wnull-dereference>
+        $<$<COMPILE_LANGUAGE:CXX>:-Wformat=2>
+        $<$<COMPILE_LANGUAGE:CXX>:-Wcast-align>
+        $<$<COMPILE_LANGUAGE:CXX>:-Wunused>)
+    # -Wshadow is deliberately omitted: Qt signal/slot lambdas routinely name a
+    # parameter after an enclosing local (11 benign hits in PBRViewer alone),
+    # which would keep _WERROR permanently out of reach.
+    if(${PROJECT_NAME}_WERROR)
+        target_compile_options(project_warnings INTERFACE $<$<COMPILE_LANGUAGE:CXX>:-Werror>)
+    endif()
+endif()
+# ---------------------------------------------------------------------------
+
 add_executable(${PROJECT_NAME} ${SOURCES} ${HEADERS})
 
 # Link Qt6 libraries
@@ -154,3 +190,7 @@ message(STATUS "Qt6 found at: ${CMAKE_PREFIX_PATH}")
 message(STATUS "Using Qt6 built-in media player")
 message(STATUS "Platform: ${CMAKE_SYSTEM_NAME}")
 message(STATUS "Compiler: ${CMAKE_CXX_COMPILER_ID} ${CMAKE_CXX_COMPILER_VERSION}")
+
+# NOTE: plain signature here, to match the existing plain-signature call above.
+# CMake forbids mixing plain and keyword forms on one target.
+target_link_libraries(${PROJECT_NAME} project_warnings)

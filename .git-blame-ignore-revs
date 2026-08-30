@@ -1,0 +1,5 @@
+# Reformat-only commits. Skip them in blame:
+#   git config blame.ignoreRevsFile .git-blame-ignore-revs
+
+# Apply clang-format across the tree (formatting only)
+bd39063dbc2861650d8d3bdd3c27d2e92bf2f582
