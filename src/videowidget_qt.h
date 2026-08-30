@@ -13,6 +13,7 @@
 #include <QMutex>
 #include <QWaitCondition>
 #include <memory>
+#include <utility>   // std::forward
 #include "advanced_cpp_features.h"
 
 class VideoProcessingThread : public QThread

@@ -4,6 +4,7 @@
 #include <QFileInfo>
 #include <QTimer>
 #include <QApplication>
+#include <utility>   // std::move
 
 MediaWidget::MediaWidget(QString displayName, QWidget *parent)
     : QWidget(parent), m_mainLayout(std::make_unique<QVBoxLayout>(this)), m_displayLabel(std::make_unique<QLabel>(this)), m_videoWidgetType(VideoWidgetType::Software), m_performanceLayout(std::make_unique<QHBoxLayout>()), m_qualityLabel(std::make_unique<QLabel>(this)), m_qualityCombo(std::make_unique<QComboBox>(this)), m_controlsLayout(std::make_unique<QHBoxLayout>()), m_openButton(std::make_unique<QPushButton>(this)), m_playButton(std::make_unique<QPushButton>(this)), m_pauseButton(std::make_unique<QPushButton>(this)), m_stopButton(std::make_unique<QPushButton>(this)), m_positionSlider(std::make_unique<QSlider>(Qt::Horizontal, this)), m_timeLabel(std::make_unique<QLabel>(this)), m_progressBar(std::make_unique<QProgressBar>(this)), m_positionTimer(std::make_unique<QTimer>(this)), m_fpsLabel(std::make_unique<QLabel>(this)), m_resolutionLabel(std::make_unique<QLabel>(this)), m_currentFile(""), m_displayName(std::move(displayName)), m_isPlaying(false), m_isPaused(false)

@@ -4,6 +4,7 @@
 #include <QUrl>
 #include <QDateTime>
 #include <QApplication>
+#include <utility>   // std::move, std::forward
 
 // VideoProcessingThread implementation
 VideoProcessingThread::VideoProcessingThread(QObject *parent)
